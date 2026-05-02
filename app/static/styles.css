@@ -115,7 +115,7 @@ button {
 .chat-input-row button { width: auto; margin-top: 6px; }
 .chat-tools {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr auto auto;
   gap: 8px;
   margin-top: 8px;
 }
@@ -146,4 +146,66 @@ button {
   border: 1px solid var(--border);
   background: #f8faff;
   padding: 10px;
+}
+
+.assistant-fab {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  width: 58px;
+  height: 58px;
+  border-radius: 999px;
+  margin: 0;
+  font-weight: 700;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+  z-index: 60;
+}
+
+.assistant-widget {
+  position: fixed;
+  right: 18px;
+  bottom: 86px;
+  width: min(360px, calc(100vw - 24px));
+  background: #fff;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 18px 30px rgba(0, 0, 0, 0.3);
+  padding: 10px;
+  z-index: 60;
+}
+
+.assistant-widget.hidden {
+  display: none;
+}
+
+.assistant-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.assistant-log {
+  min-height: 180px;
+  max-height: 320px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #f8faff;
+  padding: 8px;
+  display: grid;
+  gap: 8px;
+}
+
+.assistant-input-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.assistant-input-row button {
+  width: auto;
+  margin-top: 6px;
 }

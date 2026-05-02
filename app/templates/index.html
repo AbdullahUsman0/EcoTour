@@ -11,7 +11,7 @@
       <div class="brand">EcoTour AI</div>
       <nav class="tabs">
         <button class="tab-btn active" data-tab="planner">Trip Planner</button>
-        <button class="tab-btn" data-tab="chat">Chatbot</button>
+        <button class="tab-btn" data-tab="chat">AI Assistant</button>
         <button class="tab-btn" data-tab="saved">Saved Plans</button>
         <button class="tab-btn" data-tab="crisis">Crisis Help</button>
       </nav>
@@ -75,7 +75,7 @@
 
       <section class="page" id="page-chat">
         <div class="card chat-card">
-          <h2>EcoTour Chatbot (RAG)</h2>
+          <h2>EcoTour AI Assistant</h2>
           <div id="chatLog" class="chat-log"></div>
           <div class="chat-input-row">
             <input id="chatInput" placeholder="Ask anything about Pakistan travel, route, safety, budget..." />
@@ -89,6 +89,7 @@
           <div class="chat-tools">
             <input id="voiceInput" type="file" accept="audio/*" />
             <button id="voiceBtn" class="secondary">Transcribe Voice</button>
+            <button id="recordVoiceBtn" class="secondary">Record Voice</button>
           </div>
         </div>
       </section>
@@ -115,6 +116,19 @@
         </div>
       </section>
     </main>
+
+    <button id="assistantFab" class="assistant-fab" title="Open AI Assistant">AI</button>
+    <section id="assistantWidget" class="assistant-widget hidden">
+      <div class="assistant-head">
+        <strong>AI Assistant</strong>
+        <button id="assistantClose" class="delete-btn">X</button>
+      </div>
+      <div id="assistantWidgetLog" class="assistant-log"></div>
+      <div class="assistant-input-row">
+        <input id="assistantWidgetInput" placeholder="Ask about this screen..." />
+        <button id="assistantWidgetSend">Send</button>
+      </div>
+    </section>
 
     <script src="/static/app.js"></script>
   </body>

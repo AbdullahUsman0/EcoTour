@@ -6,8 +6,12 @@ const language = document.getElementById("language");
 const chatLog = document.getElementById("chatLog");
 const savePlanBtn = document.getElementById("savePlanBtn");
 const chatSources = document.getElementById("chatSources");
+const chatInput = document.getElementById("chatInput");
 let lastAssistantReply = "";
 let lastPlannedTrip = null;
+let activeTab = "planner";
+let mediaRecorder = null;
+let recordedChunks = [];
 
 budget.addEventListener("input", () => {
   budgetValue.textContent = budget.value;
@@ -19,6 +23,7 @@ document.querySelectorAll(".tab-btn").forEach((btn) => {
     document.querySelectorAll(".page").forEach((p) => p.classList.remove("active"));
     btn.classList.add("active");
     document.getElementById(`page-${btn.dataset.tab}`).classList.add("active");
+    activeTab = btn.dataset.tab;
   });
 });
 
@@ -57,12 +62,15 @@ planBtn.addEventListener("click", async () => {
   const optionsBox = document.getElementById("tripOptions");
   planResult.textContent =
     `Route: ${data.route}\n` +
-    `Distance: ${data.distance_km} km\n` +
+    `Distance: ${data.distance_km} km (${data.distance_source})\n` +
     `Estimated cost: PKR ${Math.round(data.estimated_cost)}\n` +
     `Budget fit: ${data.budget_fit}\n` +
     `Weather: ${data.weather_note}\n` +
     `Fare signal: ${data.fare_note}\n` +
     `Plan:\n- ${data.plan.join("\n- ")}`;
+  if ((data.hotel_suggestions || []).length) {
+    planResult.textContent += `\nHotel ideas:\n- ${data.hotel_suggestions.join("\n- ")}`;
+  }
   adviceBox.textContent =
     `Do now:\n- ${(data.do_now || []).join("\n- ")}\n\n` +
     `Avoid now:\n- ${(data.avoid_now || []).join("\n- ")}`;
@@ -105,8 +113,7 @@ savePlanBtn.addEventListener("click", async () => {
   loadTripInsights();
 });
 
-document.getElementById("chatBtn").addEventListener("click", async () => {
-  const chatInput = document.getElementById("chatInput");
+async function sendMainChatMessage() {
   const message = chatInput.value.trim();
   if (!message) return;
   addChatLine("You", message, false);
@@ -114,7 +121,11 @@ document.getElementById("chatBtn").addEventListener("click", async () => {
   const res = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message, language: language.value }),
+    body: JSON.stringify({
+      message,
+      language: language.value,
+      screen_context: `active_tab=${activeTab}; latest_plan=${(planResult.textContent || "").slice(0, 600)}`,
+    }),
   });
   const data = await res.json();
   lastAssistantReply = data.response || "No response";
@@ -122,6 +133,14 @@ document.getElementById("chatBtn").addEventListener("click", async () => {
   chatSources.textContent = (data.sources || []).length
     ? `Sources: ${data.sources.join(", ")}`
     : "";
+}
+
+document.getElementById("chatBtn").addEventListener("click", sendMainChatMessage);
+chatInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendMainChatMessage();
+  }
 });
 
 document.getElementById("speakLastBtn").addEventListener("click", async () => {
@@ -156,6 +175,42 @@ document.getElementById("voiceBtn").addEventListener("click", async () => {
     return;
   }
   addChatLine("Voice", data.text, false);
+  chatInput.value = data.text || "";
+});
+
+document.getElementById("recordVoiceBtn").addEventListener("click", async () => {
+  const btn = document.getElementById("recordVoiceBtn");
+  if (mediaRecorder && mediaRecorder.state === "recording") {
+    mediaRecorder.stop();
+    btn.textContent = "Record Voice";
+    return;
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    recordedChunks = [];
+    mediaRecorder = new MediaRecorder(stream);
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) recordedChunks.push(event.data);
+    };
+    mediaRecorder.onstop = async () => {
+      const blob = new Blob(recordedChunks, { type: "audio/webm" });
+      const file = new File([blob], "recorded.webm", { type: "audio/webm" });
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch("/api/voice/transcribe", { method: "POST", body: form });
+      const data = await res.json();
+      if (!res.ok) {
+        addChatLine("System", data.detail || "Voice transcription failed", true);
+        return;
+      }
+      chatInput.value = data.text || "";
+      if (chatInput.value.trim()) sendMainChatMessage();
+    };
+    mediaRecorder.start();
+    btn.textContent = "Stop Recording";
+  } catch (_err) {
+    addChatLine("System", "Microphone access denied or unavailable.", true);
+  }
 });
 
 document.getElementById("crisisBtn").addEventListener("click", async () => {
@@ -245,3 +300,46 @@ async function loadTripInsights() {
 loadEmergency();
 loadSavedItineraries();
 loadTripInsights();
+
+const assistantFab = document.getElementById("assistantFab");
+const assistantWidget = document.getElementById("assistantWidget");
+const assistantClose = document.getElementById("assistantClose");
+const assistantWidgetLog = document.getElementById("assistantWidgetLog");
+const assistantWidgetInput = document.getElementById("assistantWidgetInput");
+const assistantWidgetSend = document.getElementById("assistantWidgetSend");
+
+function addWidgetLine(role, text, isAi = false) {
+  const row = document.createElement("div");
+  row.className = `msg ${isAi ? "ai" : "user"}`;
+  row.innerHTML = `<strong>${role}</strong><br/>${text.replace(/\n/g, "<br/>")}`;
+  assistantWidgetLog.appendChild(row);
+  assistantWidgetLog.scrollTop = assistantWidgetLog.scrollHeight;
+}
+
+async function sendWidgetMessage() {
+  const message = assistantWidgetInput.value.trim();
+  if (!message) return;
+  addWidgetLine("You", message, false);
+  assistantWidgetInput.value = "";
+  const res = await fetch("/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      message,
+      language: language.value,
+      screen_context: `active_tab=${activeTab}; latest_plan=${(planResult.textContent || "").slice(0, 600)}`,
+    }),
+  });
+  const data = await res.json();
+  addWidgetLine("AI Assistant", data.response || "No response", true);
+}
+
+assistantFab.addEventListener("click", () => assistantWidget.classList.toggle("hidden"));
+assistantClose.addEventListener("click", () => assistantWidget.classList.add("hidden"));
+assistantWidgetSend.addEventListener("click", sendWidgetMessage);
+assistantWidgetInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendWidgetMessage();
+  }
+});
