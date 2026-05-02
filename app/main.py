@@ -3,8 +3,9 @@ from pathlib import Path
 import json
 import os
 import shutil
+import requests
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, UploadFile, Form
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -47,6 +48,36 @@ app = FastAPI(title="EcoTour AI Pakistan")
 
 BASE_DIR = Path(__file__).resolve().parent
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
+
+# Lazy-loaded Whisper model cache
+WHISPER_MODEL = None
+
+
+def get_whisper_model():
+    """Load and cache the whisper model. Model name and device may be set
+    via environment variables `WHISPER_MODEL` and `WHISPER_DEVICE`.
+    """
+    global WHISPER_MODEL
+    if WHISPER_MODEL is not None:
+        return WHISPER_MODEL
+
+    try:
+        import whisper  # type: ignore
+    except Exception:
+        raise
+
+    model_name = os.environ.get("WHISPER_MODEL", "small")
+    device = os.environ.get("WHISPER_DEVICE")
+    if not device:
+        try:
+            import torch
+
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+        except Exception:
+            device = "cpu"
+
+    WHISPER_MODEL = whisper.load_model(model_name, device=device)
+    return WHISPER_MODEL
 
 
 @app.get("/")
@@ -259,30 +290,29 @@ def get_history_summary():
 
 
 @app.post("/api/voice/transcribe")
-async def transcribe(file: UploadFile = File(...)):
+async def transcribe(
+    file: UploadFile = File(...),
+    language: str = Form(default="auto"),
+    provider: str = Form(default="whisper"),
+):
     """
     Whisper integration endpoint.
+
+    Accepts an uploaded audio `file` (multipart/form-data) and an optional
+    `language` form field (ISO 639-1 code, e.g. `en`, `ur`) or `auto` to let
+    Whisper detect the language. Configure model via `WHISPER_MODEL`.
+
     Install openai-whisper manually for local transcription:
     pip install openai-whisper
     """
     try:
-        import whisper  # type: ignore
-    except Exception as exc:
-        raise HTTPException(
-            status_code=501,
-            detail="Whisper is not installed yet. Run: pip install openai-whisper",
-        ) from exc
-
-    # Whisper needs ffmpeg executable. If system ffmpeg is missing, use
-    # imageio-ffmpeg bundled binary automatically.
-    try:
+        # Ensure imageio-ffmpeg is available to provide ffmpeg binary path
         import imageio_ffmpeg  # type: ignore
 
         ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
         ffmpeg_dir = str(Path(ffmpeg_exe).parent)
         local_ffmpeg = BASE_DIR / "ffmpeg.exe"
         if not local_ffmpeg.exists() and Path(ffmpeg_exe).exists():
-            # Whisper calls "ffmpeg" directly; keep a local executable alias.
             shutil.copyfile(ffmpeg_exe, local_ffmpeg)
         current_path = os.environ.get("PATH", "")
         if ffmpeg_dir and ffmpeg_dir not in current_path:
@@ -295,11 +325,54 @@ async def transcribe(file: UploadFile = File(...)):
     content = await file.read()
     temp_path.write_bytes(content)
 
-    model = whisper.load_model("base")
-    result = model.transcribe(str(temp_path))
-    text = result.get("text", "").strip()
+    # Prefer OpenAI Speech API if requested and API key present.
+    language_arg = None if not language or language.lower() in ("auto", "detect") else language
+    if provider and provider.lower() == "openai" and os.environ.get("OPENAI_API_KEY"):
+        try:
+            with open(temp_path, "rb") as fh:
+                files = {"file": fh}
+                data = {"model": "whisper-1"}
+                if language_arg:
+                    data["language"] = language_arg
+                resp = requests.post(
+                    "https://api.openai.com/v1/audio/transcriptions",
+                    headers={"Authorization": f"Bearer {os.environ.get('OPENAI_API_KEY')!s}"},
+                    data=data,
+                    files=files,
+                    timeout=60,
+                )
+            if not resp.ok:
+                raise HTTPException(status_code=502, detail=f"OpenAI transcription failed: {resp.text}")
+            j = resp.json()
+            text = j.get("text", "").strip()
+            detected = language_arg or j.get("language") or "unknown"
+            return {"text": text, "language": detected, "provider": "openai"}
+        except HTTPException:
+            raise
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"OpenAI transcription error: {exc}") from exc
 
-    return {"text": text}
+    # Fallback/local whisper path
+    try:
+        model = get_whisper_model()
+    except Exception:
+        raise HTTPException(
+            status_code=501,
+            detail="Whisper is not installed or failed to load. Run: pip install openai-whisper",
+        )
+
+    try:
+        if language_arg:
+            result = model.transcribe(str(temp_path), language=language_arg)
+        else:
+            result = model.transcribe(str(temp_path))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Transcription failed: {exc}") from exc
+
+    text = result.get("text", "").strip()
+    detected_lang = result.get("language") or (language_arg or "unknown")
+
+    return {"text": text, "language": detected_lang, "provider": "whisper"}
 
 
 @app.post("/api/voice/speak")

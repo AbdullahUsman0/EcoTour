@@ -163,8 +163,10 @@ document.getElementById("speakLastBtn").addEventListener("click", async () => {
 document.getElementById("voiceBtn").addEventListener("click", async () => {
   const fileInput = document.getElementById("voiceInput");
   if (!fileInput.files.length) return;
-  const form = new FormData();
-  form.append("file", fileInput.files[0]);
+    const form = new FormData();
+    form.append("file", fileInput.files[0]);
+    form.append("language", language.value || "auto");
+    form.append("provider", document.getElementById("voiceProvider").value || "whisper");
   const res = await fetch("/api/voice/transcribe", {
     method: "POST",
     body: form,
@@ -176,6 +178,8 @@ document.getElementById("voiceBtn").addEventListener("click", async () => {
   }
   addChatLine("Voice", data.text, false);
   chatInput.value = data.text || "";
+    const dl = document.getElementById("detectedLanguage");
+    if (dl) dl.textContent = `Detected: ${data.language || "-"}`;
 });
 
 document.getElementById("recordVoiceBtn").addEventListener("click", async () => {
@@ -197,6 +201,8 @@ document.getElementById("recordVoiceBtn").addEventListener("click", async () => 
       const file = new File([blob], "recorded.webm", { type: "audio/webm" });
       const form = new FormData();
       form.append("file", file);
+      form.append("language", language.value || "auto");
+        form.append("provider", document.getElementById("voiceProvider").value || "whisper");
       const res = await fetch("/api/voice/transcribe", { method: "POST", body: form });
       const data = await res.json();
       if (!res.ok) {
@@ -204,6 +210,8 @@ document.getElementById("recordVoiceBtn").addEventListener("click", async () => 
         return;
       }
       chatInput.value = data.text || "";
+        const dl = document.getElementById("detectedLanguage");
+        if (dl) dl.textContent = `Detected: ${data.language || "-"}`;
       if (chatInput.value.trim()) sendMainChatMessage();
     };
     mediaRecorder.start();

@@ -9,3 +9,4 @@ requests
 gTTS
 python-dotenv
 imageio-ffmpeg
+openai-whisper
