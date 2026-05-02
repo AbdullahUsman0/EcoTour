@@ -18,7 +18,8 @@ class VoiceCase:
 
 def normalize_text(text: str) -> str:
     text = text.lower().strip()
-    text = re.sub(r"[^a-z0-9\s]", "", text)
+    # Keep unicode word characters while removing punctuation
+    text = re.sub(r"[^\w\s]", "", text, flags=re.UNICODE)
     text = re.sub(r"\s+", " ", text)
     return text
 

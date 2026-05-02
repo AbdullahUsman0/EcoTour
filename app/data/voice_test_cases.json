@@ -11,4 +11,23 @@
     "language": "ur",
     "provider": "openai"
   }
+  ,
+  {
+    "audio": "app/data/urdu_1.mp3",
+    "expected": "کیا آپ مجھے سن سکتے ہیں",
+    "language": "ur",
+    "provider": "whisper"
+  },
+  {
+    "audio": "app/data/urdu_2.mp3",
+    "expected": "میں راستہ پوچھ رہا ہوں",
+    "language": "ur",
+    "provider": "whisper"
+  },
+  {
+    "audio": "app/data/urdu_3.mp3",
+    "expected": "موسم کی اطلاع بتائیں",
+    "language": "ur",
+    "provider": "whisper"
+  }
 ]
