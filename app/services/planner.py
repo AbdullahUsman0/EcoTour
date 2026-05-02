@@ -27,13 +27,19 @@ def haversine_distance_km(origin: str, destination: str) -> float:
     return 6371.0 * c
 
 
-def estimate_trip_cost(distance_km: float, travelers: int) -> float:
+def estimate_trip_cost(distance_km: float, travelers: int, demand_multiplier: float = 1.0) -> float:
     month_factor = 1.06 if datetime.utcnow().month in {6, 7, 8} else 0.96
     fuel_factor = 1.10
     base = 16500
     per_km = 160
     lodging_per_person = 4500
-    return round((base + distance_km * per_km + lodging_per_person * travelers) * month_factor * fuel_factor, 2)
+    return round(
+        (base + distance_km * per_km + lodging_per_person * travelers)
+        * month_factor
+        * fuel_factor
+        * demand_multiplier,
+        2,
+    )
 
 
 def budget_message(cost: float, budget: float) -> str:

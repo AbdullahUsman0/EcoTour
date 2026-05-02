@@ -14,6 +14,8 @@ class TripResponse(BaseModel):
     distance_km: float
     estimated_cost: float
     budget_fit: str
+    weather_note: str
+    fare_note: str
     plan: list[str]
 
 
@@ -24,6 +26,10 @@ class ChatIn(BaseModel):
 
 class ChatOut(BaseModel):
     response: str
+
+
+class SpeakIn(BaseModel):
+    text: str = Field(min_length=1, max_length=1500)
 
 
 class CrisisIn(BaseModel):

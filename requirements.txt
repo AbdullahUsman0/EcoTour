@@ -3,3 +3,7 @@ uvicorn
 sqlalchemy
 python-multipart
 pydantic
+supabase
+openai
+requests
+gTTS

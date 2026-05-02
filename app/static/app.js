@@ -4,6 +4,7 @@ const planBtn = document.getElementById("planBtn");
 const planResult = document.getElementById("planResult");
 const language = document.getElementById("language");
 const chatLog = document.getElementById("chatLog");
+let lastAssistantReply = "";
 
 budget.addEventListener("input", () => {
   budgetValue.textContent = budget.value;
@@ -39,6 +40,8 @@ planBtn.addEventListener("click", async () => {
     `Distance: ${data.distance_km} km\n` +
     `Estimated cost: PKR ${Math.round(data.estimated_cost)}\n` +
     `Budget fit: ${data.budget_fit}\n` +
+    `Weather: ${data.weather_note}\n` +
+    `Fare signal: ${data.fare_note}\n` +
     `Plan:\n- ${data.plan.join("\n- ")}`;
 });
 
@@ -54,7 +57,25 @@ document.getElementById("chatBtn").addEventListener("click", async () => {
     body: JSON.stringify({ message, language: language.value }),
   });
   const data = await res.json();
-  addChatLine("EcoTour AI", data.response || "No response");
+  lastAssistantReply = data.response || "No response";
+  addChatLine("EcoTour AI", lastAssistantReply);
+});
+
+document.getElementById("speakLastBtn").addEventListener("click", async () => {
+  if (!lastAssistantReply) return;
+  const res = await fetch("/api/voice/speak", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text: lastAssistantReply }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    addChatLine("System", data.detail || "TTS failed");
+    return;
+  }
+  const player = document.getElementById("ttsPlayer");
+  player.src = `${data.audio_url}?t=${Date.now()}`;
+  player.play();
 });
 
 document.getElementById("voiceBtn").addEventListener("click", async () => {

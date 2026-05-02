@@ -1,20 +1,19 @@
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy.orm import Session
 
-from app.database import Base, engine, get_db
 from app.data.knowledge import EMERGENCY_CONTACTS
-from app.models import ChatMessage, TripRequest
-from app.schemas import ChatIn, ChatOut, CrisisIn, CrisisOut, TripRequestIn, TripResponse
+from app.schemas import ChatIn, ChatOut, CrisisIn, CrisisOut, SpeakIn, TripRequestIn, TripResponse
 from app.services.chat import generate_chat_reply
 from app.services.crisis import crisis_response
+from app.services.external_signals import get_fare_signal_note, get_live_weather_note
+from app.services.llm import generate_itinerary_with_llm
 from app.services.planner import budget_message, create_plan, estimate_trip_cost, haversine_distance_km
+from app.services.supabase_store import save_chat_message, save_trip_request
 
 app = FastAPI(title="EcoTour AI Pakistan")
-Base.metadata.create_all(bind=engine)
 
 BASE_DIR = Path(__file__).resolve().parent
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -26,45 +25,66 @@ def root():
 
 
 @app.post("/api/plan-trip", response_model=TripResponse)
-def plan_trip(payload: TripRequestIn, db: Session = Depends(get_db)):
+def plan_trip(payload: TripRequestIn):
     distance = haversine_distance_km(payload.origin, payload.destination)
     if distance == 0.0:
         raise HTTPException(
             status_code=400,
             detail="Unknown city. Try Islamabad, Lahore, Karachi, Murree, Hunza, Gilgit, or Skardu.",
         )
-    estimated_cost = estimate_trip_cost(distance, payload.travelers)
-    db_row = TripRequest(
-        origin=payload.origin,
-        destination=payload.destination,
-        budget=payload.budget,
-        travelers=payload.travelers,
-        language=payload.language,
-        estimated_distance_km=distance,
-        estimated_cost=estimated_cost,
+    weather_note, weather_factor = get_live_weather_note(payload.destination)
+    fare_note, fare_factor = get_fare_signal_note()
+    estimated_cost = estimate_trip_cost(
+        distance,
+        payload.travelers,
+        demand_multiplier=weather_factor * fare_factor,
     )
-    db.add(db_row)
-    db.commit()
+    plan = generate_itinerary_with_llm(
+        payload.origin,
+        payload.destination,
+        payload.budget,
+        payload.travelers,
+        payload.language,
+        weather_note,
+        fare_note,
+    )
+    if not plan:
+        plan = create_plan(payload.destination)
+
+    save_trip_request(
+        {
+            "origin": payload.origin,
+            "destination": payload.destination,
+            "budget": payload.budget,
+            "travelers": payload.travelers,
+            "language": payload.language,
+            "estimated_distance_km": distance,
+            "estimated_cost": estimated_cost,
+            "weather_note": weather_note,
+            "fare_note": fare_note,
+        }
+    )
     return TripResponse(
         route=f"{payload.origin.title()} -> {payload.destination.title()}",
         distance_km=round(distance, 1),
         estimated_cost=estimated_cost,
         budget_fit=budget_message(estimated_cost, payload.budget),
-        plan=create_plan(payload.destination),
+        weather_note=weather_note,
+        fare_note=fare_note,
+        plan=plan,
     )
 
 
 @app.post("/api/chat", response_model=ChatOut)
-def chat(payload: ChatIn, db: Session = Depends(get_db)):
+def chat(payload: ChatIn):
     answer = generate_chat_reply(payload.message, payload.language)
-    db.add(
-        ChatMessage(
-            user_message=payload.message,
-            assistant_message=answer,
-            language=payload.language,
-        )
+    save_chat_message(
+        {
+            "user_message": payload.message,
+            "assistant_message": answer,
+            "language": payload.language,
+        }
     )
-    db.commit()
     return ChatOut(response=answer)
 
 
@@ -104,3 +124,25 @@ async def transcribe(file: UploadFile = File(...)):
     text = result.get("text", "").strip()
 
     return {"text": text}
+
+
+@app.post("/api/voice/speak")
+def speak(payload: SpeakIn):
+    """
+    TTS endpoint with gTTS.
+    Install: pip install gTTS
+    """
+    try:
+        from gtts import gTTS  # type: ignore
+    except Exception as exc:
+        raise HTTPException(
+            status_code=501,
+            detail="gTTS is not installed yet. Run: pip install gTTS",
+        ) from exc
+
+    out_dir = BASE_DIR / "static" / "generated"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_file = out_dir / "reply.mp3"
+    tts = gTTS(payload.text)
+    tts.save(str(out_file))
+    return {"audio_url": "/static/generated/reply.mp3"}

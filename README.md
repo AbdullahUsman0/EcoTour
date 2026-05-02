@@ -7,8 +7,10 @@ EcoTour AI is a full-stack travel assistant for Pakistan with:
 - English/Urdu chatbot flow
 - Crisis helper tab inspired by Rahat AI use case
 - Emergency quick-call buttons for mobile users
-- Voice transcription endpoint using Whisper (optional install)
-- SQLite storage now, Supabase-ready upgrade path
+- Voice transcription endpoint using Whisper + speech output using TTS
+- Supabase persistence for trips and chat
+- Live weather + fare pressure signal integration for dynamic pricing
+- LLM itinerary generation for smarter trip plans
 
 ## Quick Start
 
@@ -21,42 +23,70 @@ uvicorn app.main:app --reload
 
 Then open [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
-## Whisper Voice Integration
+## Environment Setup
 
-Install Whisper when you are ready:
+Copy `.env.example` to `.env` and set:
 
-```bash
-pip install openai-whisper
+- `SUPABASE_URL`
+- `SUPABASE_KEY`
+- `OPENAI_API_KEY`
+- `OPENAI_MODEL` (optional)
+
+## Supabase Tables
+
+Run this SQL in your Supabase SQL editor:
+
+```sql
+create table if not exists trip_requests (
+  id bigint generated always as identity primary key,
+  origin text not null,
+  destination text not null,
+  budget double precision not null,
+  travelers int not null,
+  language text not null,
+  estimated_distance_km double precision not null,
+  estimated_cost double precision not null,
+  weather_note text,
+  fare_note text,
+  created_at timestamptz default now()
+);
+
+create table if not exists chat_messages (
+  id bigint generated always as identity primary key,
+  user_message text not null,
+  assistant_message text not null,
+  language text not null,
+  created_at timestamptz default now()
+);
 ```
 
-Then upload audio from the UI in the chatbot section.
+## Voice Integration
 
-## Supabase Integration (Next Step)
+Install Whisper + TTS dependencies:
 
-1. Create a Supabase project and get:
-   - `SUPABASE_URL`
-   - `SUPABASE_KEY`
-2. Create tables equivalent to:
-   - `trip_requests`
-   - `chat_messages`
-3. Replace `sqlite` calls in `app/main.py` with Supabase SDK calls or keep FastAPI + Postgres via SQLAlchemy.
-4. Move emergency, trip and chat persistence to Supabase for cloud sync.
+```bash
+pip install openai-whisper gTTS
+```
 
-If you want, I can do this integration in the next pass as soon as you share your Supabase keys and preferred backend approach.
+Then:
+- Upload voice in chatbot section for speech-to-text.
+- Click "Speak Last Reply" for text-to-speech audio.
 
 ## Project Structure
 
 ```text
 app/
   main.py
-  database.py
-  models.py
+  config.py
   schemas.py
   data/knowledge.py
   services/
     planner.py
     chat.py
     crisis.py
+    external_signals.py
+    llm.py
+    supabase_store.py
   templates/index.html
   static/styles.css
   static/app.js
