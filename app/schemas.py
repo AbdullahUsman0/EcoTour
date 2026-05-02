@@ -7,6 +7,16 @@ class TripRequestIn(BaseModel):
     budget: float = Field(gt=0)
     travelers: int = Field(default=1, ge=1, le=20)
     language: str = Field(default="en")
+    hotel_tier: str = Field(default="midrange")
+    transport_mode: str = Field(default="mixed")
+    activity_pace: str = Field(default="balanced")
+    food_style: str = Field(default="local")
+
+
+class TripOption(BaseModel):
+    title: str
+    estimated_cost: float
+    highlights: list[str]
 
 
 class TripResponse(BaseModel):
@@ -17,6 +27,9 @@ class TripResponse(BaseModel):
     weather_note: str
     fare_note: str
     plan: list[str]
+    options: list[TripOption] = []
+    do_now: list[str] = []
+    avoid_now: list[str] = []
 
 
 class ChatIn(BaseModel):

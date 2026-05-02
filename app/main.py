@@ -22,7 +22,11 @@ from app.schemas import (
 from app.services.chat import generate_chat_reply
 from app.services.crisis import crisis_response
 from app.services.external_signals import get_fare_signal_note, get_live_weather_note
-from app.services.llm import generate_chat_with_context, generate_itinerary_with_llm
+from app.services.llm import (
+    generate_chat_with_context,
+    generate_itinerary_with_llm,
+    generate_trip_options_with_llm,
+)
 from app.services.planner import budget_message, create_plan, estimate_trip_cost, haversine_distance_km
 from app.services.rag import retrieve_context
 from app.services.supabase_store import (
@@ -73,6 +77,45 @@ def plan_trip(payload: TripRequestIn):
     )
     if not plan:
         plan = create_plan(payload.destination)
+    ai_options = generate_trip_options_with_llm(
+        payload.origin,
+        payload.destination,
+        payload.budget,
+        payload.travelers,
+        {
+            "hotel_tier": payload.hotel_tier,
+            "transport_mode": payload.transport_mode,
+            "activity_pace": payload.activity_pace,
+            "food_style": payload.food_style,
+        },
+        weather_note,
+        fare_note,
+    )
+    options = ai_options.get("options", []) if isinstance(ai_options, dict) else []
+    do_now = ai_options.get("do_now", []) if isinstance(ai_options, dict) else []
+    avoid_now = ai_options.get("avoid_now", []) if isinstance(ai_options, dict) else []
+    if not options:
+        options = [
+            {
+                "title": "Budget Explorer",
+                "estimated_cost": round(estimated_cost * 0.85, 2),
+                "highlights": ["Guesthouse stays", "Shared transport", "Public food spots"],
+            },
+            {
+                "title": "Balanced Comfort",
+                "estimated_cost": round(estimated_cost, 2),
+                "highlights": ["3-star hotels", "Mixed transport", "Top attractions + local food"],
+            },
+            {
+                "title": "Premium Experience",
+                "estimated_cost": round(estimated_cost * 1.35, 2),
+                "highlights": ["Premium hotels", "Private transfers", "Guided curated activities"],
+            },
+        ]
+    if not do_now:
+        do_now = ["Lock hotels early", "Keep weather backup day", "Carry emergency cash and IDs"]
+    if not avoid_now:
+        avoid_now = ["Do not overpack schedule", "Avoid night mountain driving", "Avoid single-use plastics"]
 
     save_trip_request(
         {
@@ -95,6 +138,9 @@ def plan_trip(payload: TripRequestIn):
         weather_note=weather_note,
         fare_note=fare_note,
         plan=plan,
+        options=options,
+        do_now=do_now,
+        avoid_now=avoid_now,
     )
 
 
