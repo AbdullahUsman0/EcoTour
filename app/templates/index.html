@@ -96,7 +96,11 @@
             </label>
             <button id="voiceBtn" class="secondary">Transcribe Voice</button>
             <button id="recordVoiceBtn" class="secondary">Record Voice</button>
-            <div id="detectedLanguage" style="display:inline-block;margin-left:12px;color:#444">Detected: -</div>
+            <div id="voiceStatus" style="display:inline-flex;align-items:center;gap:8px;margin-left:12px">
+              <div id="providerBadge" style="background:#eef2ff;color:#0f172a;padding:6px 8px;border-radius:999px;font-size:12px;display:none">Provider</div>
+              <div id="detectedLanguage" style="color:#444">Detected: -</div>
+              <div id="spinner" class="spinner hidden" aria-hidden="true"></div>
+            </div>
           </div>
         </div>
       </section>
