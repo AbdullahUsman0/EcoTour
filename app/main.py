@@ -80,6 +80,31 @@ def get_whisper_model():
     return WHISPER_MODEL
 
 
+def whisper_transcribe_options(language_arg: str | None) -> dict:
+    """Build stable Whisper decode settings for multilingual speech."""
+    options: dict = {
+        "task": "transcribe",
+        "temperature": 0.0,
+        "condition_on_previous_text": False,
+        "fp16": False,
+        "beam_size": 5,
+        "no_speech_threshold": 0.5,
+        "logprob_threshold": -1.0,
+    }
+    if language_arg:
+        options["language"] = language_arg
+
+    # Urdu/Hindi/Arabic speech often benefits from stronger beam search.
+    if language_arg in {"ur", "hi", "ar"}:
+        options["beam_size"] = 8
+        options["patience"] = 1.2
+
+    if language_arg == "ur":
+        options["initial_prompt"] = "Travel, Pakistan, itinerary, weather, safety, booking"
+
+    return options
+
+
 @app.get("/")
 def root():
     return FileResponse(BASE_DIR / "templates" / "index.html")
@@ -365,10 +390,7 @@ async def transcribe(
         )
 
     try:
-        if language_arg:
-            result = model.transcribe(str(temp_path), language=language_arg)
-        else:
-            result = model.transcribe(str(temp_path))
+        result = model.transcribe(str(temp_path), **whisper_transcribe_options(language_arg))
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Transcription failed: {exc}") from exc
 

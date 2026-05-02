@@ -1,0 +1,14 @@
+[
+  {
+    "audio": "app/data/recorded.webm",
+    "expected": "can you hear me yeah i cant hear you",
+    "language": "auto",
+    "provider": "whisper"
+  },
+  {
+    "audio": "app/data/recorded.webm",
+    "expected": "can you hear me yeah i cant hear you",
+    "language": "ur",
+    "provider": "openai"
+  }
+]
