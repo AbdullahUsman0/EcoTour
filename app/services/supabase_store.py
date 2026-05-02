@@ -19,13 +19,19 @@ def save_trip_request(payload: dict[str, Any]) -> bool:
     client = get_supabase_client()
     if not client:
         return False
-    client.table("trip_requests").insert(payload).execute()
-    return True
+    try:
+        client.table("trip_requests").insert(payload).execute()
+        return True
+    except Exception:
+        return False
 
 
 def save_chat_message(payload: dict[str, Any]) -> bool:
     client = get_supabase_client()
     if not client:
         return False
-    client.table("chat_messages").insert(payload).execute()
-    return True
+    try:
+        client.table("chat_messages").insert(payload).execute()
+        return True
+    except Exception:
+        return False

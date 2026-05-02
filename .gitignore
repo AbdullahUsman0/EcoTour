@@ -4,3 +4,4 @@ __pycache__/
 ecotour.db
 app/data/*.wav
 app/static/generated/
+.env
