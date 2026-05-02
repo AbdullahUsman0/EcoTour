@@ -22,10 +22,12 @@ class TripOption(BaseModel):
 class TripResponse(BaseModel):
     route: str
     distance_km: float
+    distance_source: str = "estimated"
     estimated_cost: float
     budget_fit: str
     weather_note: str
     fare_note: str
+    hotel_suggestions: list[str] = []
     plan: list[str]
     options: list[TripOption] = []
     do_now: list[str] = []
@@ -35,6 +37,7 @@ class TripResponse(BaseModel):
 class ChatIn(BaseModel):
     message: str = Field(min_length=1, max_length=1000)
     language: str = Field(default="en")
+    screen_context: str = Field(default="", max_length=1500)
 
 
 class ChatOut(BaseModel):

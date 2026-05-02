@@ -39,15 +39,28 @@ def generate_itinerary_with_llm(
     client, model = _get_ai_client()
     if not client:
         return []
-    prompt = (
-        "You are EcoTour AI for Pakistan. Create exactly 4 concise bullets for a travel plan.\n"
-        f"Origin: {origin}\nDestination: {destination}\nBudget PKR: {budget}\n"
-        f"Travelers: {travelers}\nLanguage: {language}\nWeather: {weather_note}\n"
-        f"Fare signal: {fare_note}\n"
-        "Return only bullet lines without headings."
-    )
-    response = client.responses.create(model=model, input=prompt)
-    text = (response.output_text or "").strip()
+    try:
+        completion = client.chat.completions.create(
+            model=model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are EcoTour AI for Pakistan. Return concise practical itinerary bullets.",
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        f"Origin: {origin}\nDestination: {destination}\nBudget PKR: {budget}\n"
+                        f"Travelers: {travelers}\nLanguage: {language}\nWeather: {weather_note}\n"
+                        f"Fare signal: {fare_note}\nReturn exactly 4 bullet lines."
+                    ),
+                },
+            ],
+            temperature=0.5,
+        )
+        text = (completion.choices[0].message.content or "").strip()
+    except Exception:
+        return []
     if not text:
         return []
     items = [line.strip("- ").strip() for line in text.splitlines() if line.strip()]
@@ -58,16 +71,29 @@ def generate_chat_with_context(message: str, language: str, context: str) -> str
     client, model = _get_ai_client()
     if not client:
         return ""
-    prompt = (
-        "You are EcoTour AI, an expert Pakistan travel assistant.\n"
-        "Answer the user using the provided context first. If context is incomplete, still provide practical guidance.\n"
-        "Keep answer actionable and concise with bullet points where useful.\n"
-        f"Language preference: {language}\n\n"
-        f"Context:\n{context}\n\n"
-        f"User question:\n{message}\n"
-    )
-    response = client.responses.create(model=model, input=prompt)
-    return (response.output_text or "").strip()
+    try:
+        completion = client.chat.completions.create(
+            model=model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are an AI travel assistant for Pakistan. Give accurate and useful answers. "
+                        "Use provided context if relevant but do not mention retrieval system."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        f"Language: {language}\nContext:\n{context}\n\nUser question:\n{message}"
+                    ),
+                },
+            ],
+            temperature=0.4,
+        )
+        return (completion.choices[0].message.content or "").strip()
+    except Exception:
+        return ""
 
 
 def generate_trip_options_with_llm(
@@ -91,8 +117,18 @@ def generate_trip_options_with_llm(
         f"Preferences: {preferences}\nWeather: {weather_note}\nFare: {fare_note}\n"
         'Output JSON schema: {"options":[{"title":"","estimated_cost":0,"highlights":["","",""]}],"do_now":["","",""],"avoid_now":["","",""]}'
     )
-    response = client.responses.create(model=model, input=prompt)
-    text = (response.output_text or "").strip()
+    try:
+        completion = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": "Return valid JSON only."},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.6,
+        )
+        text = (completion.choices[0].message.content or "").strip()
+    except Exception:
+        return {}
     try:
         return json.loads(text)
     except Exception:

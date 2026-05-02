@@ -22,6 +22,7 @@ from app.schemas import (
 from app.services.chat import generate_chat_reply
 from app.services.crisis import crisis_response
 from app.services.external_signals import get_fare_signal_note, get_live_weather_note
+from app.services.live_travel import get_hotel_suggestions, get_route_distance_km
 from app.services.llm import (
     generate_chat_with_context,
     generate_itinerary_with_llm,
@@ -53,7 +54,10 @@ def root():
 
 @app.post("/api/plan-trip", response_model=TripResponse)
 def plan_trip(payload: TripRequestIn):
-    distance = haversine_distance_km(payload.origin, payload.destination)
+    live_distance, distance_source = get_route_distance_km(payload.origin, payload.destination)
+    distance = live_distance if live_distance > 0 else haversine_distance_km(payload.origin, payload.destination)
+    if distance_source == "estimated":
+        distance_source = "estimated_haversine"
     if distance == 0.0:
         raise HTTPException(
             status_code=400,
@@ -61,6 +65,7 @@ def plan_trip(payload: TripRequestIn):
         )
     weather_note, weather_factor = get_live_weather_note(payload.destination)
     fare_note, fare_factor = get_fare_signal_note()
+    hotel_suggestions = get_hotel_suggestions(payload.destination, limit=5)
     estimated_cost = estimate_trip_cost(
         distance,
         payload.travelers,
@@ -133,10 +138,12 @@ def plan_trip(payload: TripRequestIn):
     return TripResponse(
         route=f"{payload.origin.title()} -> {payload.destination.title()}",
         distance_km=round(distance, 1),
+        distance_source=distance_source,
         estimated_cost=estimated_cost,
         budget_fit=budget_message(estimated_cost, payload.budget),
         weather_note=weather_note,
         fare_note=fare_note,
+        hotel_suggestions=hotel_suggestions,
         plan=plan,
         options=options,
         do_now=do_now,
@@ -147,7 +154,10 @@ def plan_trip(payload: TripRequestIn):
 @app.post("/api/chat", response_model=ChatOut)
 def chat(payload: ChatIn):
     context, sources = retrieve_context(payload.message)
-    answer = generate_chat_with_context(payload.message, payload.language, context)
+    composed_message = payload.message
+    if payload.screen_context:
+        composed_message = f"{payload.message}\n\nScreen context:\n{payload.screen_context}"
+    answer = generate_chat_with_context(composed_message, payload.language, context)
     if not answer:
         # Fallback when LLM is unavailable.
         answer = fallback_rag_style_reply(payload.message, context, payload.language)
