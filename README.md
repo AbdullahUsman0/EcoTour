@@ -14,6 +14,9 @@ EcoTour AI is a full-stack travel assistant for Pakistan with:
 - Multi-provider live AI chat (OpenAI, Groq, OpenRouter)
 - RAG-grounded answers using in-app travel knowledge base
 - AI trip options with do-now and avoid-now guidance
+- Floating AI assistant widget on every screen
+- Enter-to-send chat and microphone recording for Whisper transcription
+- Live route distance via OSRM and hotel suggestions via Overpass
 
 ## Quick Start
 
