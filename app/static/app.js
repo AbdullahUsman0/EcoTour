@@ -5,6 +5,7 @@ const planResult = document.getElementById("planResult");
 const language = document.getElementById("language");
 const chatLog = document.getElementById("chatLog");
 const savePlanBtn = document.getElementById("savePlanBtn");
+const chatSources = document.getElementById("chatSources");
 let lastAssistantReply = "";
 let lastPlannedTrip = null;
 
@@ -12,9 +13,19 @@ budget.addEventListener("input", () => {
   budgetValue.textContent = budget.value;
 });
 
-function addChatLine(role, text) {
+document.querySelectorAll(".tab-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+    document.querySelectorAll(".page").forEach((p) => p.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById(`page-${btn.dataset.tab}`).classList.add("active");
+  });
+});
+
+function addChatLine(role, text, isAi = false) {
   const row = document.createElement("div");
-  row.textContent = `${role}: ${text}`;
+  row.className = `msg ${isAi ? "ai" : "user"}`;
+  row.innerHTML = `<strong>${role}</strong><br/>${text.replace(/\n/g, "<br/>")}`;
   chatLog.appendChild(row);
   chatLog.scrollTop = chatLog.scrollHeight;
 }
@@ -79,7 +90,7 @@ document.getElementById("chatBtn").addEventListener("click", async () => {
   const chatInput = document.getElementById("chatInput");
   const message = chatInput.value.trim();
   if (!message) return;
-  addChatLine("You", message);
+  addChatLine("You", message, false);
   chatInput.value = "";
   const res = await fetch("/api/chat", {
     method: "POST",
@@ -88,7 +99,10 @@ document.getElementById("chatBtn").addEventListener("click", async () => {
   });
   const data = await res.json();
   lastAssistantReply = data.response || "No response";
-  addChatLine("EcoTour AI", lastAssistantReply);
+  addChatLine("EcoTour AI", lastAssistantReply, true);
+  chatSources.textContent = (data.sources || []).length
+    ? `Sources: ${data.sources.join(", ")}`
+    : "";
 });
 
 document.getElementById("speakLastBtn").addEventListener("click", async () => {
@@ -100,7 +114,7 @@ document.getElementById("speakLastBtn").addEventListener("click", async () => {
   });
   const data = await res.json();
   if (!res.ok) {
-    addChatLine("System", data.detail || "TTS failed");
+    addChatLine("System", data.detail || "TTS failed", true);
     return;
   }
   const player = document.getElementById("ttsPlayer");
@@ -119,10 +133,10 @@ document.getElementById("voiceBtn").addEventListener("click", async () => {
   });
   const data = await res.json();
   if (!res.ok) {
-    addChatLine("System", data.detail || "Voice transcription failed");
+    addChatLine("System", data.detail || "Voice transcription failed", true);
     return;
   }
-  addChatLine("Voice", data.text);
+  addChatLine("Voice", data.text, false);
 });
 
 document.getElementById("crisisBtn").addEventListener("click", async () => {
@@ -166,9 +180,19 @@ async function loadSavedItineraries() {
     row.innerHTML =
       `<strong>${item.traveler_name}</strong> - ${item.route}<br/>` +
       `Cost: PKR ${Math.round(item.estimated_cost)} | ${item.budget_fit}<br/>` +
-      `${(item.plan || []).join(" | ")}`;
+      `${(item.plan || []).join(" | ")}<div class='item-actions'><button class='delete-btn' data-id='${item.id}'>Delete</button></div>`;
     box.appendChild(row);
   }
+  box.querySelectorAll(".delete-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.dataset.id;
+      const res = await fetch(`/api/itineraries/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        loadSavedItineraries();
+        loadTripInsights();
+      }
+    });
+  });
 }
 
 async function loadTripInsights() {

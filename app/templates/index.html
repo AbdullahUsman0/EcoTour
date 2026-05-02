@@ -7,71 +7,85 @@
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
   <body>
-    <header class="hero">
-      <h1>EcoTour AI Pakistan</h1>
-      <p>Plan smart routes, estimate costs, chat in English/Urdu, and get emergency help quickly.</p>
+    <header class="topbar">
+      <div class="brand">EcoTour AI</div>
+      <nav class="tabs">
+        <button class="tab-btn active" data-tab="planner">Trip Planner</button>
+        <button class="tab-btn" data-tab="chat">Chatbot</button>
+        <button class="tab-btn" data-tab="saved">Saved Plans</button>
+        <button class="tab-btn" data-tab="crisis">Crisis Help</button>
+      </nav>
     </header>
 
     <main class="container">
-      <section class="card">
-        <h2>AI Trip Planner</h2>
-        <div class="grid">
-          <label>Your Name <input id="travelerName" value="Guest Traveler" /></label>
-          <label>Origin <input id="origin" value="Islamabad" /></label>
-          <label>Destination <input id="destination" value="Skardu" /></label>
-          <label>Travelers <input id="travelers" type="number" min="1" max="20" value="2" /></label>
-          <label>Language
-            <select id="language">
-              <option value="en">English</option>
-              <option value="ur">Urdu</option>
-            </select>
-          </label>
-        </div>
-        <label class="budget-label">Budget (PKR): <span id="budgetValue">200000</span></label>
-        <input id="budget" type="range" min="20000" max="500000" step="5000" value="200000" />
-        <button id="planBtn">Generate Plan</button>
-        <button id="savePlanBtn">Save This Plan</button>
-        <div id="planResult" class="result"></div>
-      </section>
-
-      <section class="card">
-        <h2>EcoTour Chatbot</h2>
-        <div id="chatLog" class="chat-log"></div>
-        <div class="chat-row">
-          <input id="chatInput" placeholder="Ask about places, costs, or safety..." />
-          <button id="chatBtn">Send</button>
-        </div>
-        <div class="chat-row">
-          <button id="speakLastBtn">Speak Last Reply</button>
-          <audio id="ttsPlayer" controls></audio>
-        </div>
-        <div class="chat-row">
-          <input id="voiceInput" type="file" accept="audio/*" />
-          <button id="voiceBtn">Transcribe Voice</button>
+      <section class="page active" id="page-planner">
+        <div class="card">
+          <h2>AI Trip Planner</h2>
+          <div class="grid">
+            <label>Your Name <input id="travelerName" value="Guest Traveler" /></label>
+            <label>Origin <input id="origin" value="Islamabad" /></label>
+            <label>Destination <input id="destination" value="Skardu" /></label>
+            <label>Travelers <input id="travelers" type="number" min="1" max="20" value="2" /></label>
+            <label>Language
+              <select id="language">
+                <option value="en">English</option>
+                <option value="ur">Urdu</option>
+              </select>
+            </label>
+          </div>
+          <label class="budget-label">Budget (PKR): <span id="budgetValue">200000</span></label>
+          <input id="budget" type="range" min="20000" max="500000" step="5000" value="200000" />
+          <div class="actions">
+            <button id="planBtn">Generate Plan</button>
+            <button id="savePlanBtn" class="secondary">Save This Plan</button>
+          </div>
+          <div id="planResult" class="result"></div>
         </div>
       </section>
 
-      <section class="card">
-        <h2>Crisis & Emergency Help</h2>
-        <textarea id="crisisInput" rows="3" placeholder="Describe emergency situation..."></textarea>
-        <button id="crisisBtn">Get Crisis Advice</button>
-        <div id="crisisResult" class="result"></div>
-        <div id="emergencyList" class="emergency-list"></div>
+      <section class="page" id="page-chat">
+        <div class="card chat-card">
+          <h2>EcoTour Chatbot (RAG)</h2>
+          <div id="chatLog" class="chat-log"></div>
+          <div class="chat-input-row">
+            <input id="chatInput" placeholder="Ask anything about Pakistan travel, route, safety, budget..." />
+            <button id="chatBtn">Send</button>
+          </div>
+          <div id="chatSources" class="sources"></div>
+          <div class="chat-tools">
+            <button id="speakLastBtn" class="secondary">Speak Last Reply</button>
+            <audio id="ttsPlayer" controls></audio>
+          </div>
+          <div class="chat-tools">
+            <input id="voiceInput" type="file" accept="audio/*" />
+            <button id="voiceBtn" class="secondary">Transcribe Voice</button>
+          </div>
+        </div>
       </section>
 
-      <section class="card">
-        <h2>Saved Itineraries</h2>
-        <div id="savedItineraries" class="stack-list"></div>
+      <section class="page" id="page-saved">
+        <div class="card">
+          <h2>Saved Itineraries</h2>
+          <div id="savedItineraries" class="stack-list"></div>
+        </div>
+        <div class="card">
+          <h2>Trip Insights</h2>
+          <div id="summaryCards" class="summary-grid"></div>
+          <div id="recentTrips" class="stack-list"></div>
+        </div>
       </section>
 
-      <section class="card">
-        <h2>Trip Insights</h2>
-        <div id="summaryCards" class="summary-grid"></div>
-        <h3>Recent Trips</h3>
-        <div id="recentTrips" class="stack-list"></div>
+      <section class="page" id="page-crisis">
+        <div class="card">
+          <h2>Crisis & Emergency Help</h2>
+          <textarea id="crisisInput" rows="3" placeholder="Describe emergency situation..."></textarea>
+          <button id="crisisBtn">Get Crisis Advice</button>
+          <div id="crisisResult" class="result"></div>
+          <div id="emergencyList" class="emergency-list"></div>
+        </div>
       </section>
     </main>
 
     <script src="/static/app.js"></script>
   </body>
-  </html>
+</html>
