@@ -1,17 +1,37 @@
 from pathlib import Path
 
+import json
+
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.data.knowledge import EMERGENCY_CONTACTS
-from app.schemas import ChatIn, ChatOut, CrisisIn, CrisisOut, SpeakIn, TripRequestIn, TripResponse
+from app.schemas import (
+    ChatIn,
+    ChatOut,
+    CrisisIn,
+    CrisisOut,
+    ItineraryOut,
+    ItinerarySaveIn,
+    SpeakIn,
+    TripHistoryOut,
+    TripRequestIn,
+    TripResponse,
+)
 from app.services.chat import generate_chat_reply
 from app.services.crisis import crisis_response
 from app.services.external_signals import get_fare_signal_note, get_live_weather_note
 from app.services.llm import generate_itinerary_with_llm
 from app.services.planner import budget_message, create_plan, estimate_trip_cost, haversine_distance_km
-from app.services.supabase_store import save_chat_message, save_trip_request
+from app.services.supabase_store import (
+    get_trip_summary,
+    list_saved_itineraries,
+    list_trip_history,
+    save_chat_message,
+    save_itinerary,
+    save_trip_request,
+)
 
 app = FastAPI(title="EcoTour AI Pakistan")
 
@@ -97,6 +117,70 @@ def crisis(payload: CrisisIn):
 @app.get("/api/emergency")
 def emergency_contacts():
     return {"contacts": EMERGENCY_CONTACTS}
+
+
+@app.post("/api/itineraries")
+def create_itinerary(payload: ItinerarySaveIn):
+    ok = save_itinerary(
+        {
+            "traveler_name": payload.traveler_name,
+            "route": payload.route,
+            "estimated_cost": payload.estimated_cost,
+            "budget_fit": payload.budget_fit,
+            "plan_json": json.dumps(payload.plan),
+        }
+    )
+    if not ok:
+        raise HTTPException(
+            status_code=400,
+            detail="Could not save itinerary. Run supabase/saved_itineraries.sql in Supabase SQL editor.",
+        )
+    return {"success": True}
+
+
+@app.get("/api/itineraries", response_model=list[ItineraryOut])
+def get_itineraries():
+    rows = list_saved_itineraries(limit=12)
+    result: list[ItineraryOut] = []
+    for row in rows:
+        plan_raw = row.get("plan_json", "[]")
+        try:
+            plan = json.loads(plan_raw) if isinstance(plan_raw, str) else plan_raw
+        except Exception:
+            plan = []
+        result.append(
+            ItineraryOut(
+                id=row.get("id", 0),
+                traveler_name=row.get("traveler_name", "Unknown"),
+                route=row.get("route", "N/A"),
+                estimated_cost=float(row.get("estimated_cost", 0)),
+                budget_fit=row.get("budget_fit", "N/A"),
+                plan=plan or [],
+                created_at=row.get("created_at", ""),
+            )
+        )
+    return result
+
+
+@app.get("/api/history/trips", response_model=list[TripHistoryOut])
+def get_trip_history():
+    rows = list_trip_history(limit=12)
+    return [
+        TripHistoryOut(
+            id=r.get("id", 0),
+            origin=r.get("origin", ""),
+            destination=r.get("destination", ""),
+            estimated_cost=float(r.get("estimated_cost", 0)),
+            budget=float(r.get("budget", 0)),
+            created_at=r.get("created_at", ""),
+        )
+        for r in rows
+    ]
+
+
+@app.get("/api/history/summary")
+def get_history_summary():
+    return get_trip_summary()
 
 
 @app.post("/api/voice/transcribe")

@@ -35,3 +35,63 @@ def save_chat_message(payload: dict[str, Any]) -> bool:
         return True
     except Exception:
         return False
+
+
+def save_itinerary(payload: dict[str, Any]) -> bool:
+    client = get_supabase_client()
+    if not client:
+        return False
+    try:
+        client.table("saved_itineraries").insert(payload).execute()
+        return True
+    except Exception:
+        return False
+
+
+def list_saved_itineraries(limit: int = 10) -> list[dict[str, Any]]:
+    client = get_supabase_client()
+    if not client:
+        return []
+    try:
+        resp = (
+            client.table("saved_itineraries")
+            .select("*")
+            .order("created_at", desc=True)
+            .limit(limit)
+            .execute()
+        )
+        return resp.data or []
+    except Exception:
+        return []
+
+
+def list_trip_history(limit: int = 10) -> list[dict[str, Any]]:
+    client = get_supabase_client()
+    if not client:
+        return []
+    try:
+        resp = (
+            client.table("trip_requests")
+            .select("id,origin,destination,estimated_cost,budget,created_at")
+            .order("created_at", desc=True)
+            .limit(limit)
+            .execute()
+        )
+        return resp.data or []
+    except Exception:
+        return []
+
+
+def get_trip_summary() -> dict[str, Any]:
+    rows = list_trip_history(limit=50)
+    if not rows:
+        return {"total_trips": 0, "avg_cost": 0, "top_route": "N/A"}
+
+    total = len(rows)
+    avg_cost = round(sum(float(r.get("estimated_cost", 0)) for r in rows) / total, 2)
+    route_counts: dict[str, int] = {}
+    for r in rows:
+        route = f"{r.get('origin', '')} -> {r.get('destination', '')}"
+        route_counts[route] = route_counts.get(route, 0) + 1
+    top_route = max(route_counts, key=route_counts.get) if route_counts else "N/A"
+    return {"total_trips": total, "avg_cost": avg_cost, "top_route": top_route}

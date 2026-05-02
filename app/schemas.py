@@ -41,3 +41,30 @@ class CrisisOut(BaseModel):
     severity: str
     advice: str
     helpline: str
+
+
+class ItinerarySaveIn(BaseModel):
+    traveler_name: str = Field(min_length=2, max_length=120)
+    route: str = Field(min_length=3, max_length=240)
+    estimated_cost: float = Field(gt=0)
+    budget_fit: str = Field(min_length=2, max_length=80)
+    plan: list[str] = Field(min_length=1, max_length=10)
+
+
+class ItineraryOut(BaseModel):
+    id: int
+    traveler_name: str
+    route: str
+    estimated_cost: float
+    budget_fit: str
+    plan: list[str]
+    created_at: str
+
+
+class TripHistoryOut(BaseModel):
+    id: int
+    origin: str
+    destination: str
+    estimated_cost: float
+    budget: float
+    created_at: str
