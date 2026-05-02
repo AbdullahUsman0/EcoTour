@@ -8,3 +8,4 @@ openai
 requests
 gTTS
 python-dotenv
+imageio-ffmpeg

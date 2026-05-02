@@ -1,6 +1,8 @@
 from pathlib import Path
 
 import json
+import os
+import shutil
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
@@ -270,6 +272,23 @@ async def transcribe(file: UploadFile = File(...)):
             status_code=501,
             detail="Whisper is not installed yet. Run: pip install openai-whisper",
         ) from exc
+
+    # Whisper needs ffmpeg executable. If system ffmpeg is missing, use
+    # imageio-ffmpeg bundled binary automatically.
+    try:
+        import imageio_ffmpeg  # type: ignore
+
+        ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+        ffmpeg_dir = str(Path(ffmpeg_exe).parent)
+        local_ffmpeg = BASE_DIR / "ffmpeg.exe"
+        if not local_ffmpeg.exists() and Path(ffmpeg_exe).exists():
+            # Whisper calls "ffmpeg" directly; keep a local executable alias.
+            shutil.copyfile(ffmpeg_exe, local_ffmpeg)
+        current_path = os.environ.get("PATH", "")
+        if ffmpeg_dir and ffmpeg_dir not in current_path:
+            os.environ["PATH"] = str(BASE_DIR) + os.pathsep + ffmpeg_dir + os.pathsep + current_path
+    except Exception:
+        pass
 
     temp_path = BASE_DIR / "data" / file.filename
     temp_path.parent.mkdir(parents=True, exist_ok=True)
