@@ -4,7 +4,9 @@ const planBtn = document.getElementById("planBtn");
 const planResult = document.getElementById("planResult");
 const language = document.getElementById("language");
 const chatLog = document.getElementById("chatLog");
+const savePlanBtn = document.getElementById("savePlanBtn");
 let lastAssistantReply = "";
+let lastPlannedTrip = null;
 
 budget.addEventListener("input", () => {
   budgetValue.textContent = budget.value;
@@ -35,6 +37,7 @@ planBtn.addEventListener("click", async () => {
     planResult.textContent = data.detail || "Could not generate trip plan.";
     return;
   }
+  lastPlannedTrip = data;
   planResult.textContent =
     `Route: ${data.route}\n` +
     `Distance: ${data.distance_km} km\n` +
@@ -43,6 +46,33 @@ planBtn.addEventListener("click", async () => {
     `Weather: ${data.weather_note}\n` +
     `Fare signal: ${data.fare_note}\n` +
     `Plan:\n- ${data.plan.join("\n- ")}`;
+});
+
+savePlanBtn.addEventListener("click", async () => {
+  if (!lastPlannedTrip) {
+    planResult.textContent = "Generate a plan first, then save it.";
+    return;
+  }
+  const payload = {
+    traveler_name: document.getElementById("travelerName").value || "Guest Traveler",
+    route: lastPlannedTrip.route,
+    estimated_cost: Number(lastPlannedTrip.estimated_cost),
+    budget_fit: lastPlannedTrip.budget_fit,
+    plan: lastPlannedTrip.plan,
+  };
+  const res = await fetch("/api/itineraries", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const data = await res.json();
+    planResult.textContent = data.detail || "Failed to save itinerary.";
+    return;
+  }
+  planResult.textContent += "\nSaved to itinerary list.";
+  loadSavedItineraries();
+  loadTripInsights();
 });
 
 document.getElementById("chatBtn").addEventListener("click", async () => {
@@ -121,4 +151,54 @@ async function loadEmergency() {
   }
 }
 
+async function loadSavedItineraries() {
+  const box = document.getElementById("savedItineraries");
+  const res = await fetch("/api/itineraries");
+  const items = await res.json();
+  box.innerHTML = "";
+  if (!Array.isArray(items) || !items.length) {
+    box.innerHTML = "<div class='stack-item'>No saved itineraries yet.</div>";
+    return;
+  }
+  for (const item of items) {
+    const row = document.createElement("div");
+    row.className = "stack-item";
+    row.innerHTML =
+      `<strong>${item.traveler_name}</strong> - ${item.route}<br/>` +
+      `Cost: PKR ${Math.round(item.estimated_cost)} | ${item.budget_fit}<br/>` +
+      `${(item.plan || []).join(" | ")}`;
+    box.appendChild(row);
+  }
+}
+
+async function loadTripInsights() {
+  const summaryBox = document.getElementById("summaryCards");
+  const tripsBox = document.getElementById("recentTrips");
+  const [summaryRes, tripsRes] = await Promise.all([
+    fetch("/api/history/summary"),
+    fetch("/api/history/trips"),
+  ]);
+  const summary = await summaryRes.json();
+  const trips = await tripsRes.json();
+
+  summaryBox.innerHTML =
+    `<div class='summary-card'><strong>Total Trips</strong><br/>${summary.total_trips ?? 0}</div>` +
+    `<div class='summary-card'><strong>Average Cost</strong><br/>PKR ${Math.round(summary.avg_cost ?? 0)}</div>` +
+    `<div class='summary-card'><strong>Top Route</strong><br/>${summary.top_route ?? "N/A"}</div>`;
+
+  tripsBox.innerHTML = "";
+  if (!Array.isArray(trips) || !trips.length) {
+    tripsBox.innerHTML = "<div class='stack-item'>No recent trips yet.</div>";
+    return;
+  }
+  for (const t of trips) {
+    const row = document.createElement("div");
+    row.className = "stack-item";
+    row.innerHTML = `<strong>${t.origin} -> ${t.destination}</strong><br/>Estimated: PKR ${Math.round(t.estimated_cost)} | Budget: PKR ${Math.round(t.budget)}`;
+    tripsBox.appendChild(row);
+  }
+}
+
 loadEmergency();
+loadSavedItineraries();
+loadTripInsights();

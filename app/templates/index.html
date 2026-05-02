@@ -16,6 +16,7 @@
       <section class="card">
         <h2>AI Trip Planner</h2>
         <div class="grid">
+          <label>Your Name <input id="travelerName" value="Guest Traveler" /></label>
           <label>Origin <input id="origin" value="Islamabad" /></label>
           <label>Destination <input id="destination" value="Skardu" /></label>
           <label>Travelers <input id="travelers" type="number" min="1" max="20" value="2" /></label>
@@ -29,6 +30,7 @@
         <label class="budget-label">Budget (PKR): <span id="budgetValue">200000</span></label>
         <input id="budget" type="range" min="20000" max="500000" step="5000" value="200000" />
         <button id="planBtn">Generate Plan</button>
+        <button id="savePlanBtn">Save This Plan</button>
         <div id="planResult" class="result"></div>
       </section>
 
@@ -55,6 +57,18 @@
         <button id="crisisBtn">Get Crisis Advice</button>
         <div id="crisisResult" class="result"></div>
         <div id="emergencyList" class="emergency-list"></div>
+      </section>
+
+      <section class="card">
+        <h2>Saved Itineraries</h2>
+        <div id="savedItineraries" class="stack-list"></div>
+      </section>
+
+      <section class="card">
+        <h2>Trip Insights</h2>
+        <div id="summaryCards" class="summary-grid"></div>
+        <h3>Recent Trips</h3>
+        <div id="recentTrips" class="stack-list"></div>
       </section>
     </main>
 
