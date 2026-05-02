@@ -320,13 +320,17 @@ async def transcribe(
     except Exception:
         pass
 
-    temp_path = BASE_DIR / "data" / file.filename
+    safe_name = Path(file.filename or "recorded_audio.webm").name
+    temp_path = BASE_DIR / "data" / safe_name
     temp_path.parent.mkdir(parents=True, exist_ok=True)
     content = await file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="Uploaded audio file is empty.")
     temp_path.write_bytes(content)
 
     # Prefer OpenAI Speech API if requested and API key present.
     language_arg = None if not language or language.lower() in ("auto", "detect") else language
+    fallback_reason = ""
     if provider and provider.lower() == "openai" and os.environ.get("OPENAI_API_KEY"):
         try:
             with open(temp_path, "rb") as fh:
@@ -342,15 +346,14 @@ async def transcribe(
                     timeout=60,
                 )
             if not resp.ok:
-                raise HTTPException(status_code=502, detail=f"OpenAI transcription failed: {resp.text}")
-            j = resp.json()
-            text = j.get("text", "").strip()
-            detected = language_arg or j.get("language") or "unknown"
-            return {"text": text, "language": detected, "provider": "openai"}
-        except HTTPException:
-            raise
+                fallback_reason = f"OpenAI failed ({resp.status_code}); fell back to local Whisper."
+            else:
+                j = resp.json()
+                text = j.get("text", "").strip()
+                detected = language_arg or j.get("language") or "unknown"
+                return {"text": text, "language": detected, "provider": "openai"}
         except Exception as exc:
-            raise HTTPException(status_code=500, detail=f"OpenAI transcription error: {exc}") from exc
+            fallback_reason = f"OpenAI transcription error ({exc}); fell back to local Whisper."
 
     # Fallback/local whisper path
     try:
@@ -372,7 +375,10 @@ async def transcribe(
     text = result.get("text", "").strip()
     detected_lang = result.get("language") or (language_arg or "unknown")
 
-    return {"text": text, "language": detected_lang, "provider": "whisper"}
+    response = {"text": text, "language": detected_lang, "provider": "whisper"}
+    if fallback_reason:
+        response["warning"] = fallback_reason
+    return response
 
 
 @app.post("/api/voice/speak")
