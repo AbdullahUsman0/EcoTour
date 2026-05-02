@@ -349,6 +349,20 @@ function showProvider(name) {
   badge.textContent = name ? name.toUpperCase() : "?";
 }
 
+// Hero search wiring
+const heroBtn = document.getElementById("heroSearchBtn");
+if (heroBtn) {
+  heroBtn.addEventListener("click", () => {
+    const o = document.getElementById("heroOrigin").value || "Islamabad";
+    const d = document.getElementById("heroDestination").value || "Skardu";
+    document.getElementById("origin").value = o;
+    document.getElementById("destination").value = d;
+    // scroll to planner card and trigger plan
+    window.scrollTo({ top: document.getElementById("page-planner").offsetTop - 20, behavior: "smooth" });
+    setTimeout(() => planBtn.click(), 250);
+  });
+}
+
 const assistantFab = document.getElementById("assistantFab");
 const assistantWidget = document.getElementById("assistantWidget");
 const assistantClose = document.getElementById("assistantClose");
