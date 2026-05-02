@@ -36,3 +36,17 @@ def generate_chat_reply(message: str, language: str) -> str:
         "Main Pakistan tours plan kar sakta hoon, cost estimate kar sakta hoon, places suggest kar sakta hoon aur emergency help de sakta hoon. Aap English ya Urdu mein pooch sakte hain.",
         language,
     )
+
+
+def fallback_rag_style_reply(message: str, context: str, language: str) -> str:
+    if language.lower().startswith("ur"):
+        return (
+            "Aap ke sawal ke liye relevant maloomat mil gayi hai:\n"
+            f"{context[:700]}\n\n"
+            "Agar aap exact route, budget, aur days batayen to main better travel plan de sakta hoon."
+        )
+    return (
+        "I found relevant travel context for your question:\n"
+        f"{context[:700]}\n\n"
+        "Share your exact route, budget, and number of days for a more precise plan."
+    )

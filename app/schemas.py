@@ -26,6 +26,7 @@ class ChatIn(BaseModel):
 
 class ChatOut(BaseModel):
     response: str
+    sources: list[str] = []
 
 
 class SpeakIn(BaseModel):

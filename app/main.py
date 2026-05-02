@@ -22,9 +22,11 @@ from app.schemas import (
 from app.services.chat import generate_chat_reply
 from app.services.crisis import crisis_response
 from app.services.external_signals import get_fare_signal_note, get_live_weather_note
-from app.services.llm import generate_itinerary_with_llm
+from app.services.llm import generate_chat_with_context, generate_itinerary_with_llm
 from app.services.planner import budget_message, create_plan, estimate_trip_cost, haversine_distance_km
+from app.services.rag import retrieve_context
 from app.services.supabase_store import (
+    delete_itinerary,
     get_trip_summary,
     list_saved_itineraries,
     list_trip_history,
@@ -32,6 +34,7 @@ from app.services.supabase_store import (
     save_itinerary,
     save_trip_request,
 )
+from app.services.chat import fallback_rag_style_reply
 
 app = FastAPI(title="EcoTour AI Pakistan")
 
@@ -97,7 +100,13 @@ def plan_trip(payload: TripRequestIn):
 
 @app.post("/api/chat", response_model=ChatOut)
 def chat(payload: ChatIn):
-    answer = generate_chat_reply(payload.message, payload.language)
+    context, sources = retrieve_context(payload.message)
+    answer = generate_chat_with_context(payload.message, payload.language, context)
+    if not answer:
+        # Fallback when LLM is unavailable.
+        answer = fallback_rag_style_reply(payload.message, context, payload.language)
+        if not context:
+            answer = generate_chat_reply(payload.message, payload.language)
     save_chat_message(
         {
             "user_message": payload.message,
@@ -105,7 +114,7 @@ def chat(payload: ChatIn):
             "language": payload.language,
         }
     )
-    return ChatOut(response=answer)
+    return ChatOut(response=answer, sources=sources)
 
 
 @app.post("/api/crisis", response_model=CrisisOut)
@@ -160,6 +169,14 @@ def get_itineraries():
             )
         )
     return result
+
+
+@app.delete("/api/itineraries/{itinerary_id}")
+def remove_itinerary(itinerary_id: int):
+    ok = delete_itinerary(itinerary_id)
+    if not ok:
+        raise HTTPException(status_code=400, detail="Could not delete itinerary")
+    return {"success": True}
 
 
 @app.get("/api/history/trips", response_model=list[TripHistoryOut])
