@@ -11,6 +11,9 @@ EcoTour AI is a full-stack travel assistant for Pakistan with:
 - Supabase persistence for trips and chat
 - Live weather + fare pressure signal integration for dynamic pricing
 - LLM itinerary generation for smarter trip plans
+- Multi-provider live AI chat (OpenAI, Groq, OpenRouter)
+- RAG-grounded answers using in-app travel knowledge base
+- AI trip options with do-now and avoid-now guidance
 
 ## Quick Start
 
@@ -29,8 +32,11 @@ Copy `.env.example` to `.env` and set:
 
 - `SUPABASE_URL`
 - `SUPABASE_KEY`
+- `AI_PROVIDER` (`openai`, `groq`, `openrouter`)
 - `OPENAI_API_KEY`
 - `OPENAI_MODEL` (optional)
+- `GROQ_API_KEY` and `GROQ_MODEL` (optional)
+- `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` (optional)
 
 ## Supabase Tables
 
