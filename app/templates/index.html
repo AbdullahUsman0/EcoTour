@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EcoTour AI Pakistan</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <h1>EcoTour AI Pakistan</h1>
+      <p>Plan smart routes, estimate costs, chat in English/Urdu, and get emergency help quickly.</p>
+    </header>
+
+    <main class="container">
+      <section class="card">
+        <h2>AI Trip Planner</h2>
+        <div class="grid">
+          <label>Origin <input id="origin" value="Islamabad" /></label>
+          <label>Destination <input id="destination" value="Skardu" /></label>
+          <label>Travelers <input id="travelers" type="number" min="1" max="20" value="2" /></label>
+          <label>Language
+            <select id="language">
+              <option value="en">English</option>
+              <option value="ur">Urdu</option>
+            </select>
+          </label>
+        </div>
+        <label class="budget-label">Budget (PKR): <span id="budgetValue">200000</span></label>
+        <input id="budget" type="range" min="20000" max="500000" step="5000" value="200000" />
+        <button id="planBtn">Generate Plan</button>
+        <div id="planResult" class="result"></div>
+      </section>
+
+      <section class="card">
+        <h2>EcoTour Chatbot</h2>
+        <div id="chatLog" class="chat-log"></div>
+        <div class="chat-row">
+          <input id="chatInput" placeholder="Ask about places, costs, or safety..." />
+          <button id="chatBtn">Send</button>
+        </div>
+        <div class="chat-row">
+          <input id="voiceInput" type="file" accept="audio/*" />
+          <button id="voiceBtn">Transcribe Voice</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Crisis & Emergency Help</h2>
+        <textarea id="crisisInput" rows="3" placeholder="Describe emergency situation..."></textarea>
+        <button id="crisisBtn">Get Crisis Advice</button>
+        <div id="crisisResult" class="result"></div>
+        <div id="emergencyList" class="emergency-list"></div>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+  </html>
