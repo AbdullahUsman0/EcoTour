@@ -26,6 +26,34 @@
             <label>Origin <input id="origin" value="Islamabad" /></label>
             <label>Destination <input id="destination" value="Skardu" /></label>
             <label>Travelers <input id="travelers" type="number" min="1" max="20" value="2" /></label>
+            <label>Hotel Type
+              <select id="hotelTier">
+                <option value="budget">Budget</option>
+                <option value="midrange" selected>Midrange</option>
+                <option value="premium">Premium</option>
+              </select>
+            </label>
+            <label>Transport
+              <select id="transportMode">
+                <option value="public">Public</option>
+                <option value="mixed" selected>Mixed</option>
+                <option value="private">Private</option>
+              </select>
+            </label>
+            <label>Activity Pace
+              <select id="activityPace">
+                <option value="relaxed">Relaxed</option>
+                <option value="balanced" selected>Balanced</option>
+                <option value="adventure">Adventure</option>
+              </select>
+            </label>
+            <label>Food Preference
+              <select id="foodStyle">
+                <option value="local" selected>Local</option>
+                <option value="mixed">Mixed</option>
+                <option value="fine_dining">Fine Dining</option>
+              </select>
+            </label>
             <label>Language
               <select id="language">
                 <option value="en">English</option>
@@ -40,6 +68,8 @@
             <button id="savePlanBtn" class="secondary">Save This Plan</button>
           </div>
           <div id="planResult" class="result"></div>
+          <div id="plannerAdvice" class="result"></div>
+          <div id="tripOptions" class="summary-grid"></div>
         </div>
       </section>
 

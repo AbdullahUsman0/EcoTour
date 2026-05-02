@@ -37,6 +37,10 @@ planBtn.addEventListener("click", async () => {
     travelers: Number(document.getElementById("travelers").value),
     budget: Number(budget.value),
     language: language.value,
+    hotel_tier: document.getElementById("hotelTier").value,
+    transport_mode: document.getElementById("transportMode").value,
+    activity_pace: document.getElementById("activityPace").value,
+    food_style: document.getElementById("foodStyle").value,
   };
   const res = await fetch("/api/plan-trip", {
     method: "POST",
@@ -49,6 +53,8 @@ planBtn.addEventListener("click", async () => {
     return;
   }
   lastPlannedTrip = data;
+  const adviceBox = document.getElementById("plannerAdvice");
+  const optionsBox = document.getElementById("tripOptions");
   planResult.textContent =
     `Route: ${data.route}\n` +
     `Distance: ${data.distance_km} km\n` +
@@ -57,6 +63,19 @@ planBtn.addEventListener("click", async () => {
     `Weather: ${data.weather_note}\n` +
     `Fare signal: ${data.fare_note}\n` +
     `Plan:\n- ${data.plan.join("\n- ")}`;
+  adviceBox.textContent =
+    `Do now:\n- ${(data.do_now || []).join("\n- ")}\n\n` +
+    `Avoid now:\n- ${(data.avoid_now || []).join("\n- ")}`;
+  optionsBox.innerHTML = "";
+  (data.options || []).forEach((option) => {
+    const card = document.createElement("div");
+    card.className = "summary-card";
+    card.innerHTML =
+      `<strong>${option.title}</strong><br/>` +
+      `Estimated: PKR ${Math.round(option.estimated_cost || 0)}<br/>` +
+      `${(option.highlights || []).map((h) => `• ${h}`).join("<br/>")}`;
+    optionsBox.appendChild(card);
+  });
 });
 
 savePlanBtn.addEventListener("click", async () => {
