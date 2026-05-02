@@ -163,29 +163,23 @@ document.getElementById("speakLastBtn").addEventListener("click", async () => {
 document.getElementById("voiceBtn").addEventListener("click", async () => {
   const fileInput = document.getElementById("voiceInput");
   if (!fileInput.files.length) return;
-  const form = new FormData();
-  form.append("file", fileInput.files[0]);
-  form.append("language", language.value || "auto");
-  const provider = document.getElementById("voiceProvider").value || "whisper";
-  form.append("provider", provider);
-  setTranscribing(true);
-  try {
-    const res = await fetch("/api/voice/transcribe", { method: "POST", body: form });
-    const data = await res.json();
-    if (!res.ok) {
-      addChatLine("System", data.detail || "Voice transcription failed", true);
-      return;
-    }
-    addChatLine("Voice", data.text, false);
-    chatInput.value = data.text || "";
+    const form = new FormData();
+    form.append("file", fileInput.files[0]);
+    form.append("language", language.value || "auto");
+    form.append("provider", document.getElementById("voiceProvider").value || "whisper");
+  const res = await fetch("/api/voice/transcribe", {
+    method: "POST",
+    body: form,
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    addChatLine("System", data.detail || "Voice transcription failed", true);
+    return;
+  }
+  addChatLine("Voice", data.text, false);
+  chatInput.value = data.text || "";
     const dl = document.getElementById("detectedLanguage");
     if (dl) dl.textContent = `Detected: ${data.language || "-"}`;
-    showProvider(data.provider || provider);
-  } catch (err) {
-    addChatLine("System", "Transcription error", true);
-  } finally {
-    setTranscribing(false);
-  }
 });
 
 document.getElementById("recordVoiceBtn").addEventListener("click", async () => {
@@ -209,24 +203,16 @@ document.getElementById("recordVoiceBtn").addEventListener("click", async () => 
       form.append("file", file);
       form.append("language", language.value || "auto");
         form.append("provider", document.getElementById("voiceProvider").value || "whisper");
-      setTranscribing(true);
-      try {
-        const res = await fetch("/api/voice/transcribe", { method: "POST", body: form });
-        const data = await res.json();
-        if (!res.ok) {
-          addChatLine("System", data.detail || "Voice transcription failed", true);
-          return;
-        }
-        chatInput.value = data.text || "";
+      const res = await fetch("/api/voice/transcribe", { method: "POST", body: form });
+      const data = await res.json();
+      if (!res.ok) {
+        addChatLine("System", data.detail || "Voice transcription failed", true);
+        return;
+      }
+      chatInput.value = data.text || "";
         const dl = document.getElementById("detectedLanguage");
         if (dl) dl.textContent = `Detected: ${data.language || "-"}`;
-        showProvider(data.provider || document.getElementById("voiceProvider").value || "whisper");
-        if (chatInput.value.trim()) sendMainChatMessage();
-      } catch (err) {
-        addChatLine("System", "Transcription error", true);
-      } finally {
-        setTranscribing(false);
-      }
+      if (chatInput.value.trim()) sendMainChatMessage();
     };
     mediaRecorder.start();
     btn.textContent = "Stop Recording";
@@ -322,46 +308,6 @@ async function loadTripInsights() {
 loadEmergency();
 loadSavedItineraries();
 loadTripInsights();
-
-// UI helpers for transcription state
-function setTranscribing(on) {
-  const spinner = document.getElementById("spinner");
-  const voiceBtn = document.getElementById("voiceBtn");
-  const recordBtn = document.getElementById("recordVoiceBtn");
-  const fileInput = document.getElementById("voiceInput");
-  if (on) {
-    if (spinner) spinner.classList.remove("hidden");
-    if (voiceBtn) voiceBtn.setAttribute("disabled", "true");
-    if (recordBtn) recordBtn.setAttribute("disabled", "true");
-    if (fileInput) fileInput.setAttribute("disabled", "true");
-  } else {
-    if (spinner) spinner.classList.add("hidden");
-    if (voiceBtn) voiceBtn.removeAttribute("disabled");
-    if (recordBtn) recordBtn.removeAttribute("disabled");
-    if (fileInput) fileInput.removeAttribute("disabled");
-  }
-}
-
-function showProvider(name) {
-  const badge = document.getElementById("providerBadge");
-  if (!badge) return;
-  badge.style.display = "inline-block";
-  badge.textContent = name ? name.toUpperCase() : "?";
-}
-
-// Hero search wiring
-const heroBtn = document.getElementById("heroSearchBtn");
-if (heroBtn) {
-  heroBtn.addEventListener("click", () => {
-    const o = document.getElementById("heroOrigin").value || "Islamabad";
-    const d = document.getElementById("heroDestination").value || "Skardu";
-    document.getElementById("origin").value = o;
-    document.getElementById("destination").value = d;
-    // scroll to planner card and trigger plan
-    window.scrollTo({ top: document.getElementById("page-planner").offsetTop - 20, behavior: "smooth" });
-    setTimeout(() => planBtn.click(), 250);
-  });
-}
 
 const assistantFab = document.getElementById("assistantFab");
 const assistantWidget = document.getElementById("assistantWidget");
