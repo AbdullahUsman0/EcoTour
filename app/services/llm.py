@@ -68,31 +68,61 @@ def generate_itinerary_with_llm(
 
 
 def generate_chat_with_context(message: str, language: str, context: str) -> str:
+    """Generate contextual chat responses with improved prompts."""
     client, model = _get_ai_client()
     if not client:
         return ""
+    
+    # Build a more sophisticated system prompt
+    language_instruction = "Answer in Urdu with local insights" if language.lower().startswith("ur") else "Answer in English with practical tips"
+    
+    system_prompt = f"""You are EcoTour AI, an expert Pakistan travel assistant. {language_instruction}.
+
+Your responses should be:
+1. **Specific & Actionable** - Provide concrete recommendations, not generic advice
+2. **Contextual** - Reference provided information but add original insights
+3. **Varied** - Use different response formats: lists, comparisons, narratives, or structured advice
+4. **Engaging** - Include relevant emojis, local insights, and cultural context
+5. **Safety-First** - Always mention safety considerations when relevant
+6. **Budget-Conscious** - Provide cost expectations and alternatives
+7. **Bilingual-Aware** - If user mixes languages, respond helpfully
+
+Always:
+- Start with a direct answer to their question
+- Include practical examples or numbers
+- Suggest follow-up information they might need
+- End with actionable next steps
+
+Format your response clearly with headers and bullet points when appropriate."""
+
     try:
         completion = client.chat.completions.create(
             model=model,
             messages=[
                 {
                     "role": "system",
-                    "content": (
-                        "You are an AI travel assistant for Pakistan. Give accurate and useful answers. "
-                        "Use provided context if relevant but do not mention retrieval system."
-                    ),
+                    "content": system_prompt,
                 },
                 {
                     "role": "user",
                     "content": (
-                        f"Language: {language}\nContext:\n{context}\n\nUser question:\n{message}"
+                        f"📍 **Context from Pakistan Travel Database:**\n{context}\n\n"
+                        f"🌐 **Language**: {language}\n"
+                        f"❓ **User Question**: {message}\n\n"
+                        "Provide a helpful, specific, and engaging response. "
+                        "Use the context to enhance but write original insights. "
+                        "Vary your response style from previous answers."
                     ),
                 },
             ],
-            temperature=0.4,
+            temperature=0.7,  # Increased for more creativity
+            top_p=0.9,
+            max_tokens=500,
         )
-        return (completion.choices[0].message.content or "").strip()
-    except Exception:
+        response = (completion.choices[0].message.content or "").strip()
+        return response if response else ""
+    except Exception as e:
+        print(f"LLM Error: {e}")
         return ""
 
 

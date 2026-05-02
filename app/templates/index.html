@@ -3,136 +3,304 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>EcoTour AI Pakistan</title>
+    <title>EcoTour AI Pakistan - Smart Travel Planning</title>
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
   <body>
+    <!-- Animated Background -->
+    <div class="gradient-bg">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+      <div class="blob blob-3"></div>
+      <div class="floating-element element-1">🏔️</div>
+      <div class="floating-element element-2">🌿</div>
+      <div class="floating-element element-3">🌍</div>
+      <div class="floating-element element-4">✈️</div>
+      <div class="floating-element element-5">🏕️</div>
+    </div>
+    <!-- Navigation Header -->
     <header class="topbar">
-      <div class="brand">EcoTour AI</div>
-      <nav class="tabs">
-        <button class="tab-btn active" data-tab="planner">Trip Planner</button>
-        <button class="tab-btn" data-tab="chat">AI Assistant</button>
-        <button class="tab-btn" data-tab="saved">Saved Plans</button>
-        <button class="tab-btn" data-tab="crisis">Crisis Help</button>
-      </nav>
+      <div class="topbar-content">
+        <div class="brand-section">
+          <div class="brand-logo">🌍</div>
+          <div>
+            <div class="brand">EcoTour AI</div>
+            <div class="brand-tagline">Smart Travel, Beautiful Journeys</div>
+          </div>
+        </div>
+        <nav class="tabs">
+          <button class="tab-btn active" data-tab="planner" title="Plan your eco-friendly trip">
+            <span class="tab-icon">📍</span>
+            <span class="tab-label">Trip Planner</span>
+          </button>
+          <button class="tab-btn" data-tab="chat" title="Ask our AI assistant">
+            <span class="tab-icon">💬</span>
+            <span class="tab-label">AI Assistant</span>
+          </button>
+          <button class="tab-btn" data-tab="saved" title="View your saved itineraries">
+            <span class="tab-icon">💾</span>
+            <span class="tab-label">Saved Plans</span>
+          </button>
+          <button class="tab-btn" data-tab="crisis" title="Emergency assistance">
+            <span class="tab-icon">🆘</span>
+            <span class="tab-label">Crisis Help</span>
+          </button>
+        </nav>
+      </div>
     </header>
 
+    <!-- Main Content -->
     <main class="container">
+      <!-- Trip Planner Page -->
       <section class="page active" id="page-planner">
-        <div class="card">
-          <h2>AI Trip Planner</h2>
-          <div class="grid">
-            <label>Your Name <input id="travelerName" value="Guest Traveler" /></label>
-            <label>Origin <input id="origin" value="Islamabad" /></label>
-            <label>Destination <input id="destination" value="Skardu" /></label>
-            <label>Travelers <input id="travelers" type="number" min="1" max="20" value="2" /></label>
-            <label>Hotel Type
-              <select id="hotelTier">
-                <option value="budget">Budget</option>
-                <option value="midrange" selected>Midrange</option>
-                <option value="premium">Premium</option>
-              </select>
-            </label>
-            <label>Transport
-              <select id="transportMode">
-                <option value="public">Public</option>
-                <option value="mixed" selected>Mixed</option>
-                <option value="private">Private</option>
-              </select>
-            </label>
-            <label>Activity Pace
-              <select id="activityPace">
-                <option value="relaxed">Relaxed</option>
-                <option value="balanced" selected>Balanced</option>
-                <option value="adventure">Adventure</option>
-              </select>
-            </label>
-            <label>Food Preference
-              <select id="foodStyle">
-                <option value="local" selected>Local</option>
-                <option value="mixed">Mixed</option>
-                <option value="fine_dining">Fine Dining</option>
-              </select>
-            </label>
-            <label>Language
-              <select id="language">
-                <option value="en">English</option>
-                <option value="ur">Urdu</option>
-              </select>
-            </label>
+        <div class="page-header">
+          <h1>✨ AI Trip Planner</h1>
+          <p class="page-subtitle">Design your perfect eco-friendly adventure in Pakistan</p>
+        </div>
+        
+        <div class="content-grid">
+          <!-- Planner Form Card -->
+          <div class="card planner-card">
+            <div class="card-header">
+              <h2>Your Travel Details</h2>
+              <span class="card-badge">Step 1</span>
+            </div>
+            
+            <div class="form-section">
+              <h3>👤 Traveler Information</h3>
+              <div class="grid">
+                <label>Your Name <input id="travelerName" value="Guest Traveler" /></label>
+                <label>Number of Travelers <input id="travelers" type="number" min="1" max="20" value="2" /></label>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>📍 Destination</h3>
+              <div class="grid">
+                <label>From <input id="origin" value="Islamabad" /></label>
+                <label>To <input id="destination" value="Skardu" /></label>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>🏨 Preferences</h3>
+              <div class="grid">
+                <label>Hotel Type
+                  <select id="hotelTier">
+                    <option value="budget">Budget</option>
+                    <option value="midrange" selected>Midrange</option>
+                    <option value="premium">Premium</option>
+                  </select>
+                </label>
+                <label>Transport
+                  <select id="transportMode">
+                    <option value="public">Public</option>
+                    <option value="mixed" selected>Mixed</option>
+                    <option value="private">Private</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>🎯 Trip Style</h3>
+              <div class="grid">
+                <label>Activity Pace
+                  <select id="activityPace">
+                    <option value="relaxed">Relaxed</option>
+                    <option value="balanced" selected>Balanced</option>
+                    <option value="adventure">Adventure</option>
+                  </select>
+                </label>
+                <label>Food Preference
+                  <select id="foodStyle">
+                    <option value="local" selected>Local</option>
+                    <option value="mixed">Mixed</option>
+                    <option value="fine_dining">Fine Dining</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>🌐 Languages & Budget</h3>
+              <div class="grid">
+                <label>Language
+                  <select id="language">
+                    <option value="en">English</option>
+                    <option value="ur">Urdu</option>
+                  </select>
+                </label>
+              </div>
+              
+              <label class="budget-label">💰 Budget (PKR): <span id="budgetValue">200000</span></label>
+              <input id="budget" type="range" min="20000" max="500000" step="5000" value="200000" />
+            </div>
+
+            <div class="actions">
+              <button id="planBtn" class="btn-primary">🚀 Generate Plan</button>
+              <button id="savePlanBtn" class="btn-secondary">💾 Save This Plan</button>
+            </div>
           </div>
-          <label class="budget-label">Budget (PKR): <span id="budgetValue">200000</span></label>
-          <input id="budget" type="range" min="20000" max="500000" step="5000" value="200000" />
-          <div class="actions">
-            <button id="planBtn">Generate Plan</button>
-            <button id="savePlanBtn" class="secondary">Save This Plan</button>
+
+          <!-- Results Section -->
+          <div class="results-section">
+            <div class="card result-card">
+              <div class="card-header">
+                <h2>Your Trip Plan</h2>
+                <span class="card-badge">Results</span>
+              </div>
+              <div id="planResult" class="result"></div>
+            </div>
+
+            <div class="card advice-card">
+              <div class="card-header">
+                <h2>Pro Tips</h2>
+              </div>
+              <div id="plannerAdvice" class="result"></div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h2>Available Options</h2>
+              </div>
+              <div id="tripOptions" class="summary-grid"></div>
+            </div>
           </div>
-          <div id="planResult" class="result"></div>
-          <div id="plannerAdvice" class="result"></div>
-          <div id="tripOptions" class="summary-grid"></div>
         </div>
       </section>
 
+      <!-- Chat Assistant Page -->
       <section class="page" id="page-chat">
-        <div class="card chat-card">
-          <h2>EcoTour AI Assistant</h2>
-          <div id="chatLog" class="chat-log"></div>
-          <div class="chat-input-row">
-            <input id="chatInput" placeholder="Ask anything about Pakistan travel, route, safety, budget..." />
-            <button id="chatBtn">Send</button>
+        <div class="page-header">
+          <h1>💬 AI Assistant</h1>
+          <p class="page-subtitle">Ask anything about travel in Pakistan</p>
+        </div>
+
+        <div class="chat-layout">
+          <!-- Left: Chat Interface -->
+          <div class="chat-column">
+            <div class="card chat-card">
+              <div class="card-header compact-header">
+                <h2>Conversation</h2>
+                <span class="chat-status">Active</span>
+              </div>
+              
+              <div id="chatLog" class="chat-log"></div>
+              
+              <div class="chat-input-section">
+                <div class="chat-input-row">
+                  <input id="chatInput" placeholder="Ask about routes, safety, budget..." />
+                  <button id="chatBtn" class="btn-primary compact-btn">Send</button>
+                </div>
+              </div>
+              
+              <div id="chatSources" class="sources"></div>
+            </div>
           </div>
-          <div id="chatSources" class="sources"></div>
-          <div class="chat-tools">
-            <button id="speakLastBtn" class="secondary">Speak Last Reply</button>
-            <audio id="ttsPlayer" controls></audio>
-          </div>
-          <div class="chat-tools">
-            <input id="voiceInput" type="file" accept="audio/*" />
-            <label style="display:inline-block;margin-left:8px">Provider
-              <select id="voiceProvider">
-                <option value="whisper" selected>Local Whisper</option>
-                <option value="openai">OpenAI Speech</option>
-              </select>
-            </label>
-            <button id="voiceBtn" class="secondary">Transcribe Voice</button>
-            <button id="recordVoiceBtn" class="secondary">Record Voice</button>
-            <div id="detectedLanguage" style="display:inline-block;margin-left:12px;color:#444">Detected: -</div>
+
+          <!-- Right: Tools & Features -->
+          <div class="tools-column">
+            <!-- Audio Features -->
+            <div class="card voice-card">
+              <div class="card-header compact-header">
+                <h2>🔊 Audio</h2>
+              </div>
+              <button id="speakLastBtn" class="btn-secondary btn-block">🔊 Speak Last Reply</button>
+              <audio id="ttsPlayer" controls style="width: 100%; margin-top: 10px; height: 28px;"></audio>
+            </div>
+
+            <!-- Voice Input -->
+            <div class="card voice-card input-card">
+              <div class="card-header compact-header">
+                <h2>🎤 Voice Input</h2>
+              </div>
+              <input id="voiceInput" type="file" accept="audio/*" style="padding: 6px; font-size: 11px;" />
+              <button id="voiceBtn" class="btn-secondary btn-block" style="margin-top: 8px;">🎤 Transcribe</button>
+              <button id="recordVoiceBtn" class="btn-secondary btn-block">⏺️ Record Voice</button>
+            </div>
+
+            <!-- Provider Selection -->
+            <div class="card provider-card">
+              <div class="card-header compact-header">
+                <h2>⚙️ Settings</h2>
+              </div>
+              <label>Voice Provider:
+                <select id="voiceProvider" style="margin-top: 6px;">
+                  <option value="whisper" selected>Local Whisper</option>
+                  <option value="openai">OpenAI Speech</option>
+                </select>
+              </label>
+              <div id="detectedLanguage" class="language-badge" style="margin-top: 12px;">Detected: -</div>
+            </div>
           </div>
         </div>
       </section>
 
+      <!-- Saved Plans Page -->
       <section class="page" id="page-saved">
-        <div class="card">
-          <h2>Saved Itineraries</h2>
-          <div id="savedItineraries" class="stack-list"></div>
+        <div class="page-header">
+          <h1>💾 Your Saved Itineraries</h1>
+          <p class="page-subtitle">Manage and review your planned adventures</p>
         </div>
-        <div class="card">
-          <h2>Trip Insights</h2>
-          <div id="summaryCards" class="summary-grid"></div>
-          <div id="recentTrips" class="stack-list"></div>
+
+        <div class="saved-grid">
+          <div class="card">
+            <div class="card-header">
+              <h2>Saved Itineraries</h2>
+            </div>
+            <div id="savedItineraries" class="stack-list"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h2>Trip Insights</h2>
+            </div>
+            <div id="summaryCards" class="summary-grid"></div>
+            <div id="recentTrips" class="stack-list"></div>
+          </div>
         </div>
       </section>
 
+      <!-- Crisis Help Page -->
       <section class="page" id="page-crisis">
-        <div class="card">
-          <h2>Crisis & Emergency Help</h2>
-          <textarea id="crisisInput" rows="3" placeholder="Describe emergency situation..."></textarea>
-          <button id="crisisBtn">Get Crisis Advice</button>
-          <div id="crisisResult" class="result"></div>
-          <div id="emergencyList" class="emergency-list"></div>
+        <div class="page-header">
+          <h1>🆘 Crisis & Emergency Help</h1>
+          <p class="page-subtitle">Get immediate assistance in emergencies</p>
+        </div>
+
+        <div class="crisis-container">
+          <div class="card crisis-card">
+            <div class="card-header alert-header">
+              <h2>Emergency Support</h2>
+              <span class="alert-status">24/7 Available</span>
+            </div>
+            
+            <div class="crisis-info">
+              <textarea id="crisisInput" rows="4" placeholder="Describe your emergency situation..."></textarea>
+              <button id="crisisBtn" class="btn-danger">Get Crisis Advice Now</button>
+            </div>
+            
+            <div id="crisisResult" class="result"></div>
+            <div id="emergencyList" class="emergency-list"></div>
+          </div>
         </div>
       </section>
     </main>
 
-    <button id="assistantFab" class="assistant-fab" title="Open AI Assistant">AI</button>
+    <!-- Floating Action Elements -->
+    <button id="assistantFab" class="assistant-fab" title="Quick AI Assistant">
+      <span class="fab-icon">💡</span>
+    </button>
+    
     <section id="assistantWidget" class="assistant-widget hidden">
       <div class="assistant-head">
-        <strong>AI Assistant</strong>
-        <button id="assistantClose" class="delete-btn">X</button>
+        <strong>Quick Assist</strong>
+        <button id="assistantClose" class="close-btn">×</button>
       </div>
       <div id="assistantWidgetLog" class="assistant-log"></div>
       <div class="assistant-input-row">
-        <input id="assistantWidgetInput" placeholder="Ask about this screen..." />
+        <input id="assistantWidgetInput" placeholder="Ask something..." />
         <button id="assistantWidgetSend">Send</button>
       </div>
     </section>
